@@ -3,7 +3,7 @@
 generator_values = [883, 879]
 # generator_values = [1092455, 430625591]
 factors = [16807, 48271]
-divisor = 214748364
+divisor = 2147483647
 
 
 def generate_a():
