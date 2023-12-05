@@ -11,9 +11,10 @@ import (
 
 func main() {
 	part1()
+	part2()
 }
 
-func part1() {
+func buildSets() map[int]map[int]map[string]int {
 	file, err := os.Open("input.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -65,6 +66,11 @@ func part1() {
 		log.Fatal(err)
 	}
 
+	return sets
+}
+
+func part1() {
+	sets := buildSets()
 	maxRed, maxGreen, maxBlue := 12, 13, 14
 	impossibleIds := make(map[int]bool)
 
@@ -86,4 +92,33 @@ func part1() {
 	}
 
 	fmt.Println(sum)
+}
+
+func part2() {
+	games := buildSets()
+	powers := make(map[int]int)
+
+	for game, sets := range games {
+		minRed, minGreen, minBlue := 0, 0, 0
+		for _, set := range sets {
+			red, blue, green := set["red"], set["blue"], set["green"]
+			if red > minRed {
+				minRed = red
+			}
+			if blue > minBlue {
+				minBlue = blue
+			}
+			if green > minGreen {
+				minGreen = green
+			}
+		}
+		powers[game] = minRed * minBlue * minGreen
+	}
+
+	sumPowers := 0
+	for _, power := range powers {
+		sumPowers += power
+	}
+
+	fmt.Println(sumPowers)
 }
