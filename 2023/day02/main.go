@@ -10,67 +10,35 @@ import (
 )
 
 func main() {
-	part1()
-	part2()
+	sol1, sol2 := getSolution()
+
+	res1 := part1()
+	res2 := part2()
+
+	fmt.Printf("Part 1: %d (should be %d)\n", res1, sol1)
+	fmt.Printf("Part 2: %d (should be %d)\n", res2, sol2)
 }
 
-func buildSets() map[int]map[int]map[string]int {
-	file, err := os.Open("input.txt")
+func getSolution() (int, int) {
+	file, err := os.Open("solution.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	reId := regexp.MustCompile(`^Game (\d*):(.*)$`)
-	reSets := regexp.MustCompile(`([^;]*);?`)
-	reRed := regexp.MustCompile(`(\d*) red`)
-	reBlue := regexp.MustCompile(`(\d*) blue`)
-	reGreen := regexp.MustCompile(`(\d*) green`)
-
-	sets := make(map[int]map[int]map[string]int)
-
 	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lineMatches := reId.FindAllStringSubmatch(scanner.Text(), -1)
-		idStr, setsStr := lineMatches[0][1], lineMatches[0][2]
 
-		id, _ := strconv.Atoi(idStr)
-		sets[id] = make(map[int]map[string]int)
+	scanner.Scan()
+	sol1, _ := strconv.Atoi(scanner.Text())
 
-		setsMatches := reSets.FindAllStringSubmatch(setsStr, -1)
-		for setNo, setStr := range setsMatches {
+	scanner.Scan()
+	sol2, _ := strconv.Atoi(scanner.Text())
 
-			redMatches := reRed.FindAllStringSubmatch(setStr[1], -1)
-			blueMatches := reBlue.FindAllStringSubmatch(setStr[1], -1)
-			greenMatches := reGreen.FindAllStringSubmatch(setStr[1], -1)
-
-			red, blue, green := 0, 0, 0
-			if redMatches != nil {
-				red, _ = strconv.Atoi(redMatches[0][1])
-			}
-			if blueMatches != nil {
-				blue, _ = strconv.Atoi(blueMatches[0][1])
-			}
-			if greenMatches != nil {
-				green, _ = strconv.Atoi(greenMatches[0][1])
-			}
-			sets[id][setNo] = map[string]int{
-				"red":   red,
-				"blue":  blue,
-				"green": green,
-			}
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return sets
+	return sol1, sol2
 }
 
-func part1() {
-	sets := buildSets()
+func part1() int {
+	sets := readGames()
 	maxRed, maxGreen, maxBlue := 12, 13, 14
 	impossibleIds := make(map[int]bool)
 
@@ -91,11 +59,11 @@ func part1() {
 		}
 	}
 
-	fmt.Println(sum)
+	return sum
 }
 
-func part2() {
-	games := buildSets()
+func part2() int {
+	games := readGames()
 	powers := make(map[int]int)
 
 	for game, sets := range games {
@@ -120,5 +88,53 @@ func part2() {
 		sumPowers += power
 	}
 
-	fmt.Println(sumPowers)
+	return sumPowers
+}
+
+func readGames() map[int]map[int]map[string]int {
+	file, err := os.Open("input.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	reId := regexp.MustCompile(`^Game (\d*):(.*)$`)
+	reSets := regexp.MustCompile(`([^;]*);?`)
+
+	sets := make(map[int]map[int]map[string]int)
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lineMatches := reId.FindAllStringSubmatch(scanner.Text(), -1)
+		idStr, setsStr := lineMatches[0][1], lineMatches[0][2]
+
+		id, _ := strconv.Atoi(idStr)
+		sets[id] = make(map[int]map[string]int)
+
+		setsMatches := reSets.FindAllStringSubmatch(setsStr, -1)
+		for setNo, setStr := range setsMatches {
+			sets[id][setNo] = map[string]int{
+				"red":   countCubes("red", setStr[1]),
+				"blue":  countCubes("blue", setStr[1]),
+				"green": countCubes("green", setStr[1]),
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return sets
+}
+
+func countCubes(color, results string) int {
+	re := regexp.MustCompile(`(\d*) ` + color)
+	matches := re.FindAllStringSubmatch(results, -1)
+	if matches != nil {
+		count, _ := strconv.Atoi(matches[0][1])
+		return count
+	} else {
+		return 0
+	}
 }
