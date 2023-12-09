@@ -1,4 +1,4 @@
-package main
+package day02
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func main() {
+func Run() {
 	sol1, sol2 := getSolution()
 
 	res1 := part1()
