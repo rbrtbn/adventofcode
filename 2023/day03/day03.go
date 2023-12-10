@@ -19,23 +19,24 @@ func Part1(input string) int {
 	sum := 0
 	for i, line := range lines {
 		lastNumber := ""
-		isPartNumber := false
 		for j, char := range line {
 			if isNumber(char) {
 				lastNumber += string(char)
-				isPartNumber = isPartNumber || isNextToSymbol(symbols, i, j)
 			} else {
-				if isPartNumber {
+				jMin, jMax := j-len(lastNumber), j
+				if isNumberNextToSymbol(symbols, i, jMin, jMax) {
 					number, _ := strconv.Atoi(lastNumber)
 					sum += number
 				}
 				lastNumber = ""
-				isPartNumber = false
 			}
 		}
-		if isPartNumber {
-			number, _ := strconv.Atoi(lastNumber)
-			sum += number
+		if lastNumber != "" {
+			jMin, jMax := len(line)-len(lastNumber), len(line)
+			if isNumberNextToSymbol(symbols, i, jMin, jMax) {
+				number, _ := strconv.Atoi(lastNumber)
+				sum += number
+			}
 		}
 	}
 
@@ -56,17 +57,24 @@ func isNumber(symbol rune) bool {
 	return reNumber.MatchString(string(symbol))
 }
 
-func isNextToSymbol(symbols [][]bool, i, j int) bool {
-	// fmt.Println(i, j, len(symbols), len(symbols[0]))
-	iHighBound := len(symbols) - 1
-	jHighBound := len(symbols[0]) - 1
+func isNumberNextToSymbol(symbols [][]bool, i, jMin, jMax int) bool {
+	for j := jMin; j < jMax; j++ {
+		if isNextToSymbol(symbols, i, j) {
+			return true
+		}
+	}
 
-	return (i > 0 && symbols[i-1][j]) ||
-		(i < iHighBound && symbols[i+1][j]) ||
-		(j > 0 && symbols[i][j-1]) ||
-		(j < jHighBound && symbols[i][j+1]) ||
-		(i > 0 && j > 0 && symbols[i-1][j-1]) ||
-		(i > 0 && j < jHighBound && symbols[i-1][j+1]) ||
-		(i < iHighBound && j > 0 && symbols[i+1][j-1]) ||
-		(i < iHighBound && j < jHighBound && symbols[i+1][j+1])
+	return false
+}
+
+func isNextToSymbol(symbols [][]bool, i, j int) bool {
+	for ii := i - 1; ii <= i+1; ii++ {
+		for jj := j - 1; jj <= j+1; jj++ {
+			if ii >= 0 && ii <= len(symbols)-1 && jj >= 0 && jj <= len(symbols[0])-1 && symbols[ii][jj] {
+				return true
+			}
+		}
+	}
+
+	return false
 }
