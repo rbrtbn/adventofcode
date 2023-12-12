@@ -1,28 +1,28 @@
 package day03
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
+type part struct {
+	isSymbol bool
+	isNumber bool
+	number   int
+	position int
+}
+
 func Part1(input string) int {
-	lines := strings.Split(input, "\n")
-	symbols := collectSymbols(lines)
+	engine := parseInput(input)
 
 	sum := 0
-	for i, line := range lines {
-		lastNumber := ""
-		for j, char := range line {
-			if isNumber(char) {
-				lastNumber += string(char)
-			} else {
-				sum += getPartNumber(symbols, i, j, lastNumber)
-				lastNumber = ""
+	for _, parts := range engine {
+		for _, part := range parts {
+			if part.isNumber && part.position == 0 {
+				sum += part.number
 			}
-		}
-		if lastNumber != "" {
-			sum += getPartNumber(symbols, i, len(line), lastNumber)
 		}
 	}
 
@@ -30,59 +30,95 @@ func Part1(input string) int {
 }
 
 func Part2(input string) int {
-	return 0
+	engine := parseInput(input)
+
+	sum := 0
+	for i, parts := range engine {
+		for j, part := range parts {
+			if part.isSymbol {
+				sum += i + j
+				// neighbours := getNeighbours(parts, i, j)
+				// if len(neighbours) > 0 {
+				// 	min := neighbours[0][0]
+				// 	for _, neighbour := range neighbours {
+				// 		if neighbour[0] < min {
+				// 			min = neighbour[0]
+				// 		}
+				// 	}
+				// 	parts[i][j][0] = min
+				// }
+			}
+		}
+	}
+
+	fmt.Println(engine)
+
+	return sum
 }
 
-func collectSymbols(lines []string) [][]bool {
-	symbols := make([][]bool, len(lines)-1)
-	for i, line := range lines[:len(lines)-1] {
-		symbols[i] = make([]bool, len(line))
+func parseInput(input string) [][]part {
+	lines := strings.Split(input, "\n")
+	lines = lines[:len(lines)-1]
+
+	engine := make([][]part, len(lines))
+	for i, line := range lines {
+		engine[i] = make([]part, len(line))
 		for j, char := range line {
-			symbols[i][j] = isSymbol(char)
+			if isSymbol(char) {
+				engine[i][j] = part{true, false, 0, 0}
+			}
 		}
 	}
 
-	return symbols
+	for i, line := range lines {
+		numStr := ""
+		for j, char := range line {
+			if isNumber(char) {
+				numStr += string(char)
+			} else {
+				engine = storePartNumber(engine, i, j, numStr)
+				numStr = ""
+			}
+		}
+		if numStr != "" {
+			engine = storePartNumber(engine, i, len(line), numStr)
+		}
+	}
+
+	return engine
 }
 
-func isSymbol(symbol rune) bool {
-	reNotSymbol := regexp.MustCompile(`\d|\.`)
-	return !reNotSymbol.MatchString(string(symbol))
-}
-
-func isNumber(symbol rune) bool {
-	reNumber := regexp.MustCompile(`\d`)
-	return reNumber.MatchString(string(symbol))
-}
-
-func getPartNumber(symbols [][]bool, i, j int, numStr string) int {
+func storePartNumber(engine [][]part, i, j int, numStr string) [][]part {
 	jMin, jMax := j-len(numStr), j
-	if isRangeNextToSymbol(symbols, i, jMin, jMax) {
-		number, _ := strconv.Atoi(numStr)
-		return number
-	}
+	if isPartNumber(engine, i, jMin, jMax) {
+		partNumber, _ := strconv.Atoi(numStr)
 
-	return 0
-}
-
-func isRangeNextToSymbol(symbols [][]bool, i, jMin, jMax int) bool {
-	for j := jMin; j < jMax; j++ {
-		if isNextToSymbol(symbols, i, j) {
-			return true
+		for k := j - 1; k > j-len(numStr)-1; k-- {
+			engine[i][k] = part{false, true, partNumber, k - j + len(numStr)}
 		}
 	}
 
-	return false
+	return engine
 }
 
-func isNextToSymbol(symbols [][]bool, i, j int) bool {
-	for ii := i - 1; ii <= i+1; ii++ {
-		for jj := j - 1; jj <= j+1; jj++ {
-			if ii >= 0 && ii <= len(symbols)-1 && jj >= 0 && jj <= len(symbols[0])-1 && symbols[ii][jj] {
-				return true
+func isPartNumber(engine [][]part, i, jMin, jMax int) bool {
+	for j := jMin; j < jMax; j++ {
+		for ii := i - 1; ii <= i+1; ii++ {
+			for jj := j - 1; jj <= j+1; jj++ {
+				if ii >= 0 && ii <= len(engine)-1 && jj >= 0 && jj <= len(engine[0])-1 && engine[ii][jj].isSymbol {
+					return true
+				}
 			}
 		}
 	}
 
 	return false
+}
+
+func isNumber(symbol rune) bool {
+	return regexp.MustCompile(`\d`).MatchString(string(symbol))
+}
+
+func isSymbol(symbol rune) bool {
+	return symbol != '.' && !isNumber(symbol)
 }
