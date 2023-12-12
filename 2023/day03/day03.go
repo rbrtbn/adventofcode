@@ -8,13 +8,7 @@ import (
 
 func Part1(input string) int {
 	lines := strings.Split(input, "\n")
-	symbols := make([][]bool, len(lines)-1)
-	for i, line := range lines[:len(lines)-1] {
-		symbols[i] = make([]bool, len(line))
-		for j, char := range line {
-			symbols[i][j] = isSymbol(char)
-		}
-	}
+	symbols := collectSymbols(lines)
 
 	sum := 0
 	for i, line := range lines {
@@ -23,20 +17,12 @@ func Part1(input string) int {
 			if isNumber(char) {
 				lastNumber += string(char)
 			} else {
-				jMin, jMax := j-len(lastNumber), j
-				if isNumberNextToSymbol(symbols, i, jMin, jMax) {
-					number, _ := strconv.Atoi(lastNumber)
-					sum += number
-				}
+				sum += getPartNumber(symbols, i, j, lastNumber)
 				lastNumber = ""
 			}
 		}
 		if lastNumber != "" {
-			jMin, jMax := len(line)-len(lastNumber), len(line)
-			if isNumberNextToSymbol(symbols, i, jMin, jMax) {
-				number, _ := strconv.Atoi(lastNumber)
-				sum += number
-			}
+			sum += getPartNumber(symbols, i, len(line), lastNumber)
 		}
 	}
 
@@ -45,6 +31,18 @@ func Part1(input string) int {
 
 func Part2(input string) int {
 	return 0
+}
+
+func collectSymbols(lines []string) [][]bool {
+	symbols := make([][]bool, len(lines)-1)
+	for i, line := range lines[:len(lines)-1] {
+		symbols[i] = make([]bool, len(line))
+		for j, char := range line {
+			symbols[i][j] = isSymbol(char)
+		}
+	}
+
+	return symbols
 }
 
 func isSymbol(symbol rune) bool {
@@ -57,7 +55,17 @@ func isNumber(symbol rune) bool {
 	return reNumber.MatchString(string(symbol))
 }
 
-func isNumberNextToSymbol(symbols [][]bool, i, jMin, jMax int) bool {
+func getPartNumber(symbols [][]bool, i, j int, numStr string) int {
+	jMin, jMax := j-len(numStr), j
+	if isRangeNextToSymbol(symbols, i, jMin, jMax) {
+		number, _ := strconv.Atoi(numStr)
+		return number
+	}
+
+	return 0
+}
+
+func isRangeNextToSymbol(symbols [][]bool, i, jMin, jMax int) bool {
 	for j := jMin; j < jMax; j++ {
 		if isNextToSymbol(symbols, i, j) {
 			return true
